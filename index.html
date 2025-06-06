@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fab Trivial Pursuit: The Midlife Edition</title>
+  <style>
+    body {
+      background-color: #1E1E2F;
+      color: #FAF9F6;
+      font-family: 'Helvetica Neue', sans-serif;
+      padding: 20px;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background-color: #CC5500;
+      color: #000;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+    }
+
+    h1 {
+      color: #D4AF37;
+      text-align: center;
+    }
+
+    .question {
+      margin-bottom: 25px;
+    }
+
+    .question h2 {
+      font-size: 20px;
+      color: #8E3A59;
+    }
+
+    .answers button {
+      background-color: #D4AF37;
+      color: #1E1E2F;
+      padding: 10px 15px;
+      margin: 5px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    .answers button:hover {
+      background-color: #F25C54;
+      color: white;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .result {
+      background-color: #8E3A59;
+      color: #FAF9F6;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .leaderboard {
+      background-color: #000;
+      color: #D4AF37;
+      padding: 20px;
+      margin-top: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    }
+
+    .leaderboard h2 {
+      text-align: center;
+      color: #FAF9F6;
+    }
+
+    .leaderboard table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    .leaderboard th, .leaderboard td {
+      border: 1px solid #D4AF37;
+      padding: 10px;
+      text-align: left;
+    }
+
+    #userForm {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    #userForm input {
+      margin: 5px;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      width: 80%;
+      max-width: 300px;
+    }
+
+    #userForm button {
+      background-color: #6A0DAD;
+      color: #FAF9F6;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Fab Trivial Pursuit:<br>The Midlife Edition</h1>
+    <div id="userForm">
+      <h2>Enter your info to play:</h2>
+      <input type="text" id="userName" placeholder="Your Name" required />
+      <input type="email" id="userEmail" placeholder="Your Email" required />
+      <button onclick="startQuiz()">Start Quiz</button>
+    </div>
+
+    <div id="quiz"></div>
+    <div class="result hidden" id="resultBox"></div>
+
+    <div class="leaderboard" id="leaderboard">
+      <h2>🏆 Fab Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Name</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    const quizData = [
+  { q: "What was the name of the band led by Boy George?", a: ["Duran Duran", "Wham!", "Culture Club", "Eurythmics"], correct: 2 },
+  { q: "What was the name of the coffee shop in the hit show Friends?", a: ["Brew & Chew", "Daily Grind", "Central Perk", "Mocha Moon"], correct: 2 },
+  { q: "What is a common sign of perimenopause?", a: ["Better sleep", "Rapid weight loss", "Irregular periods", "Increased libido"], correct: 2 },
+  { q: "What is the last name of the business tycoon behind the No. 5 perfume?", a: ["Versace", "Chanel", "Dior", "Lauder"], correct: 1 },
+  { q: "Which of these things didn’t exist in 1985?", a: ["Disposable cameras", "The World Wide Web", "Shoulder pads", "Rubik’s Cube"], correct: 1 },
+  { q: "What year did Whitney Houston release 'I Wanna Dance With Somebody'?", a: ["1984", "1987", "1990", "1992"], correct: 1 },
+  { q: "Which of these is a grounding practice often used for anxiety?", a: ["Scrolling Instagram", "The 5-4-3-2-1 technique", "Multitasking", "Watching reality TV"], correct: 1 },
+  { q: "Which fashion trend screamed 'midlife confidence'?", a: ["Shoulder pads", "Crop tops", "Low-rise jeans", "Juicy Couture tracksuits"], correct: 0 },
+  { q: "What are 'cool points'?", a: ["Physical currency", "Brownie points for style", "Arcade credits", "Likes on Myspace"], correct: 1 },
+  { q: "What’s something midlife women are finally giving themselves permission to do?", a: ["People-please", "Shrink", "Take up space", "Be quiet"], correct: 2 }
+];
+
+    let currentQuestion = 0;
+    let score = 0;
+    const quiz = document.getElementById('quiz');
+    const resultBox = document.getElementById('resultBox');
+
+    function startQuiz() {
+      const name = document.getElementById('userName').value;
+      const email = document.getElementById('userEmail').value;
+      if (!name || !email) {
+        alert("Please enter your name and email to play.");
+        return;
+      }
+      window.quizPlayer = { name, email };
+      document.getElementById('userForm').style.display = 'none';
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      const q = quizData[currentQuestion];
+      quiz.innerHTML = `<div class="question">
+        <h2>Q${currentQuestion + 1}: ${q.q}</h2>
+        <div class="answers">
+          ${q.a.map((answer, i) => `<button onclick="selectAnswer(${i})">${answer}</button>`).join('')}
+        </div>
+      </div>`;
+    }
+
+    function selectAnswer(i) {
+      if (i === quizData[currentQuestion].correct) {
+        score++;
+      }
+      currentQuestion++;
+      if (currentQuestion < quizData.length) {
+        loadQuestion();
+      } else {
+        showResult();
+      }
+    }
+
+    function sendScoreToSheet(name, email, score) {
+      fetch('https://script.google.com/macros/s/AKfycbyEB_O6TlE6criIWd2nez0KH7ruhykoXWnqFIXGbVP-_TgBdfKeWcv4s_qNzBcBuHMF/exec', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name, email, score })
+      })
+      .then(response => response.json())
+      .then(data => console.log('Success:', data))
+      .catch(error => console.error('Error:', error));
+    }
+
+    function showResult() {
+      quiz.innerHTML = '';
+      resultBox.classList.remove('hidden');
+      resultBox.innerHTML = `<h2>You scored ${score} out of ${quizData.length}</h2>
+        <p>${score >= 8 ? 'You’re fab, fierce, and officially a Midlife Mastermind! 👑' : 'Still fabulous. Come back next week and glow even harder ✨'}</p>`;
+      sendScoreToSheet(window.quizPlayer.name, window.quizPlayer.email, score);
+    }
+  </script>
+</body>
+</html>
